@@ -1,1 +1,22 @@
 @import "tailwindcss";
+
+/* 汽车方向灯效果：明暗交替的节奏性闪烁 (Car turn signal / blinker) */
+@keyframes carTurnSignal {
+  0%, 48% {
+    opacity: 1;
+    stroke-width: 2.8;
+  }
+  50%, 98% {
+    opacity: 0.12;
+    stroke-width: 2.2;
+  }
+  100% {
+    opacity: 1;
+    stroke-width: 2.8;
+  }
+}
+
+.animate-turn-signal {
+  animation: carTurnSignal 0.75s infinite ease-in-out;
+}
+

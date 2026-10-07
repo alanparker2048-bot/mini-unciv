@@ -82,7 +82,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
                 <span className="text-base">🗡️</span>
                 <div>
                   <span className="font-bold text-blue-300">士兵 ({COSTS.SOLDIER}金)</span>
-                  <p className="text-slate-400">负责探路、占领与攻坚。绿圈走位，红圈直接攻击！</p>
+                  <p className="text-slate-400">负责探路、占领与攻坚。可原地【驻防】回血20点并获得30%受创减免！</p>
                 </div>
               </div>
 

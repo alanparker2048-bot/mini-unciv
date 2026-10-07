@@ -27,12 +27,17 @@ import { HexGrid } from './components/HexGrid';
 import { BottomControls } from './components/BottomControls';
 import { VictoryModal } from './components/VictoryModal';
 import { HelpModal } from './components/HelpModal';
+import { MoveConfirmModal } from './components/MoveConfirmModal';
 
 export default function App() {
   const [state, setState] = useState<GameState>(() => createInitialGameState());
   const [damageFloaters, setDamageFloaters] = useState<DamageFloater[]>([]);
   const [isAITurn, setIsAITurn] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [pendingMove, setPendingMove] = useState<{
+    unit: Unit;
+    targetCoord: HexCoord;
+  } | null>(null);
 
   // Auto clean damage floaters after 1.5s
   useEffect(() => {
@@ -100,32 +105,15 @@ export default function App() {
         return;
       }
 
-      // 2. If currently selected friendly unit and clicking a valid move tile -> MOVE!
+      // 2. If currently selected friendly unit and clicking a valid move tile -> Open Confirm Modal!
       if (
         selectedUnit &&
         selectedUnit.faction === 'PLAYER' &&
         validMoves.some((m) => isSameCoord(m, targetCoord))
       ) {
-        playMoveSound();
-        const dist = hexDistance(selectedUnit.coord, targetCoord);
-        const remainingMoves = Math.max(0, selectedUnit.movesLeft - dist);
-
-        setState((prev) => {
-          const updatedUnits = prev.units.map((u) =>
-            u.id === selectedUnit.id
-              ? {
-                  ...u,
-                  coord: targetCoord,
-                  movesLeft: remainingMoves,
-                  isFortified: false,
-                }
-              : u,
-          );
-          return {
-            ...prev,
-            units: updatedUnits,
-            selectedCoord: targetCoord,
-          };
+        setPendingMove({
+          unit: selectedUnit,
+          targetCoord,
         });
         return;
       }
@@ -138,6 +126,46 @@ export default function App() {
     },
     [selectedUnit, validMoves, validTargets, state, isAITurn],
   );
+
+  // Target Tile for Pending Move
+  const pendingTargetTile = useMemo(() => {
+    if (!pendingMove) return undefined;
+    return state.tiles.find((t) => isSameCoord(t.coord, pendingMove.targetCoord));
+  }, [pendingMove, state.tiles]);
+
+  // Execute Confirmed Move
+  const handleConfirmMove = useCallback(() => {
+    if (!pendingMove) return;
+    const { unit, targetCoord } = pendingMove;
+
+    playMoveSound();
+    const dist = hexDistance(unit.coord, targetCoord);
+    const remainingMoves = Math.max(0, unit.movesLeft - dist);
+
+    setState((prev) => {
+      const updatedUnits = prev.units.map((u) =>
+        u.id === unit.id
+          ? {
+              ...u,
+              coord: targetCoord,
+              movesLeft: remainingMoves,
+              isFortified: false,
+            }
+          : u,
+      );
+      return {
+        ...prev,
+        units: updatedUnits,
+        selectedCoord: targetCoord,
+      };
+    });
+    setPendingMove(null);
+  }, [pendingMove]);
+
+  // Cancel Pending Move
+  const handleCancelMove = useCallback(() => {
+    setPendingMove(null);
+  }, []);
 
   // Instant Purchase: Recruit Soldier
   const handleRecruitSoldier = useCallback(
@@ -312,7 +340,7 @@ export default function App() {
         return {
           ...prev,
           units: updatedUnits,
-          log: [`部队就地驻防休整，恢复了 20 点生命值。`, ...prev.log.slice(0, 15)],
+          log: [`部队就地驻扎休整：恢复 20 生命值，且受到伤害减少 30%！`, ...prev.log.slice(0, 15)],
         };
       });
     },
@@ -366,6 +394,7 @@ export default function App() {
   const handleEndTurn = useCallback(() => {
     if (isAITurn || state.status !== 'PLAYING') return;
 
+    setPendingMove(null);
     setIsAITurn(true);
 
     // Brief 500ms delay to make AI movement clear to user
@@ -395,6 +424,7 @@ export default function App() {
   const handleRestart = useCallback(() => {
     setState(createInitialGameState());
     setDamageFloaters([]);
+    setPendingMove(null);
     setIsAITurn(false);
   }, []);
 
@@ -446,6 +476,18 @@ export default function App() {
 
         {/* Help & 5-minute Rules Modal */}
         {showHelp && <HelpModal onClose={() => setShowHelp(false)} />}
+
+        {/* Unit Move Confirmation Modal */}
+        {pendingMove && (
+          <MoveConfirmModal
+            unit={pendingMove.unit}
+            targetCoord={pendingMove.targetCoord}
+            targetTile={pendingTargetTile}
+            playerEra={state.playerEra}
+            onConfirm={handleConfirmMove}
+            onCancel={handleCancelMove}
+          />
+        )}
       </div>
     </div>
   );

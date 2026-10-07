@@ -149,7 +149,7 @@ export const BottomControls: React.FC<BottomControlsProps> = ({
               <div className="flex flex-col">
                 <div className="flex items-center gap-1.5 font-bold text-xs text-slate-100">
                   {selectedUnit.type === 'SETTLER' ? '🚩 我方开拓者' : playerEra === 'MODERN' ? '🔫 现代步兵' : '🗡️ 古代勇士'}
-                  {selectedUnit.isFortified && <span className="text-[10px] text-amber-400 font-normal">🛡️驻防中</span>}
+                  {selectedUnit.isFortified && <span className="text-[10px] text-amber-400 font-normal">🛡️驻防(-30%受创)</span>}
                 </div>
                 <div className="flex items-center gap-3 text-[11px] text-slate-400 mt-0.5">
                   <span>生命: <b className="text-emerald-400">{selectedUnit.hp}/{selectedUnit.maxHp}</b></span>
@@ -176,7 +176,7 @@ export const BottomControls: React.FC<BottomControlsProps> = ({
                     className="flex items-center gap-1 px-2.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium border border-slate-700 transition active:scale-95"
                   >
                     <Shield className="w-3.5 h-3.5 text-blue-400" />
-                    <span>驻防(+20HP)</span>
+                    <span>驻防(+20HP,减伤30%)</span>
                   </button>
                 )}
               </div>

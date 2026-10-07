@@ -232,14 +232,20 @@ export function executeAttack(
   const targetUnit = updatedUnits.find((u) => isSameCoord(u.coord, targetCoord));
   const targetCity = updatedCities.find((c) => isSameCoord(c.coord, targetCoord));
 
-  // Defense terrain modifiers
+  // Defense modifiers: Terrain & Fortification
   let defenseMultiplier = 1.0;
   if (targetTile?.terrain === 'HILLS' || targetTile?.terrain === 'FOREST') {
-    defenseMultiplier = 0.8; // Takes 20% less damage
+    defenseMultiplier *= 0.8; // Takes 20% less damage from hills/forest
+  }
+
+  // 驻扎状态的士兵受到的伤害减少30%
+  const isTargetFortified = Boolean(targetUnit && targetUnit.isFortified);
+  if (isTargetFortified) {
+    defenseMultiplier *= 0.7; // 驻扎受创减少 30%
   }
 
   const rawDmg = attacker.attack;
-  const finalDamage = Math.round(rawDmg * defenseMultiplier);
+  const finalDamage = Math.max(1, Math.round(rawDmg * defenseMultiplier));
 
   if (targetUnit) {
     // Attack enemy unit
@@ -247,7 +253,7 @@ export function executeAttack(
     floaters.push({
       id: `float-${Date.now()}-1`,
       coord: targetCoord,
-      text: `-${finalDamage}`,
+      text: isTargetFortified ? `-${finalDamage} 🛡️` : `-${finalDamage}`,
       color: '#ef4444',
       timestamp: Date.now(),
     });
@@ -256,7 +262,9 @@ export function executeAttack(
       // Enemy unit killed
       targetDestroyed = true;
       updatedUnits = updatedUnits.filter((u) => u.id !== targetUnit.id);
-      logMsg = `${attacker.faction === 'PLAYER' ? '我方' : '敌方'}士兵消灭了敌军！`;
+      logMsg = `${attacker.faction === 'PLAYER' ? '我方' : '敌方'}士兵消灭了敌军！${
+        isTargetFortified ? '（目标虽驻防仍被消灭）' : ''
+      }`;
 
       // If melee and tile is empty, move attacker into the target tile!
       const currentAttackerIdx = updatedUnits.findIndex((u) => u.id === attacker.id);
@@ -310,7 +318,8 @@ export function executeAttack(
       if (targetIdx !== -1) {
         updatedUnits[targetIdx] = updatedTarget;
       }
-      logMsg = `${attacker.faction === 'PLAYER' ? '我方' : '敌方'}攻击造成 ${finalDamage} 伤害！`;
+      const fortifyNote = isTargetFortified ? '（驻扎减伤30%）' : '';
+      logMsg = `${attacker.faction === 'PLAYER' ? '我方' : '敌方'}攻击造成 ${finalDamage} 伤害！${fortifyNote}`;
     }
   } else if (targetCity) {
     // Attack enemy city

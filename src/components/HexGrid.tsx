@@ -47,6 +47,9 @@ export const HexGrid: React.FC<HexGridProps> = ({
             <filter id="tileShadow" x="-10%" y="-10%" width="120%" height="120%">
               <feDropShadow dx="0" dy="2" stdDeviation="1.5" floodColor="#000" floodOpacity="0.5" />
             </filter>
+            <filter id="greenUnitGlow" x="-30%" y="-30%" width="160%" height="160%">
+              <feDropShadow dx="0" dy="0" stdDeviation="2.5" floodColor="#22c55e" floodOpacity="0.8" />
+            </filter>
           </defs>
 
           {/* Render All Hex Tiles */}
@@ -157,16 +160,7 @@ export const HexGrid: React.FC<HexGridProps> = ({
                   </g>
                 )}
 
-                {/* Move Hint Indicator */}
-                {isValidMove && (
-                  <circle
-                    cx={center.x}
-                    cy={center.y}
-                    r={5}
-                    fill="#34d399"
-                    className="animate-ping opacity-75"
-                  />
-                )}
+
 
                 {/* Attack Target Indicator */}
                 {isValidTarget && (
@@ -313,17 +307,17 @@ export const HexGrid: React.FC<HexGridProps> = ({
                 }}
                 className="cursor-pointer transition-transform duration-200"
               >
-                {/* Selected Unit Ring */}
+                {/* Selected Unit Ring: 实线绿色圈 + 类似汽车方向灯明暗交替闪烁效果 */}
                 {isSelected && (
                   <circle
                     cx="0"
                     cy="0"
-                    r="20"
+                    r="19"
                     fill="none"
-                    stroke="#38bdf8"
-                    strokeWidth="2.5"
-                    strokeDasharray="4 2"
-                    className="animate-spin"
+                    stroke="#22c55e"
+                    strokeWidth="2.8"
+                    filter="url(#greenUnitGlow)"
+                    className="animate-turn-signal"
                   />
                 )}
 
